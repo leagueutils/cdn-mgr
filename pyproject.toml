@@ -7,6 +7,9 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
+aiofiles = "^23.2.1"
+opencv-python = "^4.9.0.80"
+opencv-contrib-python = "^4.9.0.80"
 
 
 [build-system]
