@@ -4,8 +4,9 @@ import uuid
 from typing import Optional
 
 from leagueutils.components import db
+from leagueutils.components.mesh import MessageService, routes
 from leagueutils.errors.db import NotFoundException
-from leagueutils.stomp import MessageService, routes
+from leagueutils.models.cdn import Config
 
 from errors import CDNError, MediaNotFound
 from media_classes import MediaClass
@@ -26,20 +27,26 @@ class CDNManager:
         target architecture:
         /assets/{media-class}/{id}[-{name}]/symlink
     """
-    def __init__(self, base_path: str, link_path: str):
-        self.base_path = base_path
-        self.link_path = link_path
+    def __init__(self, config: Config):
+        self.base_path = config.base_path
+        self.link_path = config.link_path
 
     @mesh.message_mapping(routes.CDN.STORE_MEDIA_REQUEST)
     async def add_media(self, media_bytes: bytes, media_class: str, name: str):
+        """store a medium in the cdn
+        :param media_bytes: a byte stream containing the medium to be stored
+        :param media_class: the class of the medium
+        :param name: the target name. Format: tournament_id-tournament_name/filename.extension
+        """
+
         medium = MediaClass.from_class_name(media_class, name, media_bytes)
-        media_hash = medium.hash(media_bytes, media_class)
+        media_hash = medium.hash()
         try:
             [media_id] = await db.fetchrow('SELECT media_id FROM cdn.media WHERE hash=$1', media_hash)
             store = False
         except NotFoundException:
             store = True
-            media_id = uuid.uuid4()
+            media_id = str(uuid.uuid4())
 
         fp = self.get_storage_path(medium, media_id)
         if store:
@@ -80,6 +87,12 @@ class CDNManager:
 
     @mesh.message_mapping(routes.CDN.DELETE_MEDIA_REQUEST)
     async def remove_media(self, media_class: str, name: Optional[str] = None, link: Optional[str] = None):
+        """remove a medium from the cdn. Deletes the symlink associated with the request, and if the medium is no
+        longer associated with any other links, also deletes the original file
+        :param media_class: the class of the medium
+        :param name: the target name. Format: tournament_id-tournament_name/filename.extension
+        :param link: the symlink to delete
+        """
         if link:
             symlink = link
         elif name:
@@ -100,7 +113,7 @@ class CDNManager:
             os.unlink(self.get_storage_path(medium, media_id))
             await db.execute('DELETE FROM cdn.media WHERE media_id=$1', media_id)
 
-    async def cleanup_expired_assets(self):
+    async def cleanup_expired_assets(self):  # todo: run periodically
         try:
             to_remove = await db.fetch('''SELECT m.media_class, l.link from cdn.links l JOIN cdn.media m USING(media_id)
                 WHERE l.ttl < CURRENT_TIMESTAMP''')
@@ -109,3 +122,7 @@ class CDNManager:
         
         for media_class, link in to_remove:
             await self.remove_media(media_class, link)
+
+    @staticmethod
+    async def run():
+        await mesh.listen()
