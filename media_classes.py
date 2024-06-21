@@ -3,6 +3,7 @@ import cv2
 import hashlib
 import numpy as np
 import os
+import re
 
 # local imports
 from errors import CDNError
@@ -10,6 +11,7 @@ from errors import CDNError
 
 IMAGE_TYPES = ['png', 'jpg', 'jpeg']
 FONT_TYPES = ['otf', 'ttf']
+NAME_PAT = re.compile(r'\d+-\w+/\w+\.[a-z]+')
 
 MAX_FILE_SIZE_BYTES = 1234567  # todo: changeme
 
@@ -72,6 +74,9 @@ class Image(MediaClass):
         return hsh.compute(im)
 
     def validate(self):
+        if not NAME_PAT.match(self.name):
+            raise CDNError('Invalid name')
+
         if (extension := self.name.split('.')[-1]) not in IMAGE_TYPES:
             raise CDNError('Invalid file type')
 
@@ -86,6 +91,9 @@ class Font(MediaClass):
         return hashlib.sha256(self.bytes, usedforsecurity=False)
 
     def validate(self):
+        if not NAME_PAT.match(self.name):
+            raise CDNError('Invalid name')
+
         if (extension := self.name.split('.')[-1]) not in FONT_TYPES:
             raise CDNError('Invalid file type')
 
