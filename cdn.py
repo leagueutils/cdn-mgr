@@ -1,7 +1,8 @@
-import aiofiles
 import os
 import uuid
 from typing import Optional
+
+import aiofiles
 
 from leagueutils.components import db
 from leagueutils.components.mesh import MessageService, routes
@@ -9,7 +10,6 @@ from leagueutils.errors import CDNError, MediaNotFound, NotFoundException
 from leagueutils.models.cdn import Config
 
 from media_classes import MediaClass
-
 
 mesh = MessageService()
 
@@ -26,6 +26,7 @@ class CDNManager:
         target architecture:
         /assets/{media-class}/{id}[-{name}]/symlink
     """
+
     def __init__(self, config: Config):
         self.base_path = config.base_path
         self.link_path = config.link_path
@@ -55,14 +56,15 @@ class CDNManager:
         os.link(fp, symlink)
         await db.execute('INSERT INTO cdn.links VALUES ($1, $2, $3)', media_id, symlink, medium.ttl)
 
-    async def add_link(self, target_link: str, media_id: Optional[str], source_link: Optional[str],
-                       media_class: Optional[str]):
+    async def add_link(
+        self, target_link: str, media_id: Optional[str], source_link: Optional[str], media_class: Optional[str]
+    ):
         # todo: investigate injecting utility methods via a sidecar class that is statically passed
         if source_link:
             try:
                 [media_id] = await db.fetchrow('SELECT media_id FROM cdn.links WHERE link=$1', source_link)
-            except NotFoundException:
-                raise MediaNotFound(f'Could not find media for link {source_link}')
+            except NotFoundException as e:
+                raise MediaNotFound(f'Could not find media for link {source_link}') from e
         elif not media_id:
             raise CDNError('Media ID or source link must be provided')
 
@@ -115,11 +117,13 @@ class CDNManager:
 
     async def cleanup_expired_assets(self):  # todo: run periodically
         try:
-            to_remove = await db.fetch('''SELECT m.media_class, l.link from cdn.links l JOIN cdn.media m USING(media_id)
-                WHERE l.ttl < CURRENT_TIMESTAMP''')
+            to_remove = await db.fetch(
+                """SELECT m.media_class, l.link from cdn.links l JOIN cdn.media m USING(media_id)
+                WHERE l.ttl < CURRENT_TIMESTAMP"""
+            )
         except NotFoundException:
             return  # nothing to clean up
-        
+
         for media_class, link in to_remove:
             await self.remove_media(media_class, link)
 
