@@ -5,10 +5,9 @@ from typing import Optional
 
 from leagueutils.components import db
 from leagueutils.components.mesh import MessageService, routes
-from leagueutils.errors.db import NotFoundException
+from leagueutils.errors import CDNError, MediaNotFound, NotFoundException
 from leagueutils.models.cdn import Config
 
-from errors import CDNError, MediaNotFound
 from media_classes import MediaClass
 
 
@@ -58,11 +57,12 @@ class CDNManager:
 
     async def add_link(self, target_link: str, media_id: Optional[str], source_link: Optional[str],
                        media_class: Optional[str]):
+        # todo: investigate injecting utility methods via a sidecar class that is statically passed
         if source_link:
             try:
                 [media_id] = await db.fetchrow('SELECT media_id FROM cdn.links WHERE link=$1', source_link)
             except NotFoundException:
-                raise MediaNotFound('Invalid media')
+                raise MediaNotFound(f'Could not find media for link {source_link}')
         elif not media_id:
             raise CDNError('Media ID or source link must be provided')
 

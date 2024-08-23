@@ -5,8 +5,7 @@ import numpy as np
 import os
 import re
 
-# local imports
-from errors import CDNError
+from leagueutils.errors import CDNError
 
 
 IMAGE_TYPES = ['png', 'jpg', 'jpeg']
