@@ -7,10 +7,10 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-aiofiles = "^23.2.1"
-opencv-python = "^4.9.0.80"
-opencv-contrib-python = "^4.9.0.80"
 
+aiofiles = "^24.1.0"
+opencv-python = "^4.10.0.82"
+opencv-contrib-python = "^4.10.0.82"
 
 [build-system]
 requires = ["poetry-core"]
