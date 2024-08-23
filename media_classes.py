@@ -1,12 +1,12 @@
 import abc
-import cv2
 import hashlib
-import numpy as np
 import os
 import re
 
-from leagueutils.errors import CDNError
+import cv2
+import numpy as np
 
+from leagueutils.errors import CDNError
 
 IMAGE_TYPES = ['png', 'jpg', 'jpeg']
 FONT_TYPES = ['otf', 'ttf']

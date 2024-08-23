@@ -1,9 +1,9 @@
 import asyncio
+
 from leagueutils.models.cdn import Config
 
 # local imports
 from cdn import CDNManager
-
 
 cdn_mgr = CDNManager(Config())
 

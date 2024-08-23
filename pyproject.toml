@@ -1,3 +1,6 @@
+[project]
+requires-python = ">= 3.12"
+
 [tool.poetry]
 name = "cdn-mgr"
 version = "0.1.0"
@@ -7,7 +10,6 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-
 aiofiles = "^24.1.0"
 opencv-python = "^4.10.0.82"
 opencv-contrib-python = "^4.10.0.82"
@@ -15,3 +17,29 @@ opencv-contrib-python = "^4.10.0.82"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 120
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "C",  # flake8-comprehensions
+    "B",  # flake8-bugbear
+]
+ignore = [
+    "C901",  # too complex
+]
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.ruff.isort]
+section-order = ["future", "standard-library", "third-party", "lu", "first-party", "local-folder"]
+
+[tool.ruff.isort.sections]
+lu = ["leagueutils"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
