@@ -6,7 +6,7 @@ import re
 import cv2
 import numpy as np
 
-from leagueutils.errors import CDNError
+from leagueutils.errors import CDNException
 
 IMAGE_TYPES = ['png', 'jpg', 'jpeg']
 FONT_TYPES = ['otf', 'ttf']
@@ -38,7 +38,7 @@ class MediaClass(abc.ABC):
             case 'font':
                 _cls = Font
             case _:
-                raise CDNError('Invalid media type')
+                raise CDNException('Invalid media type')
         return _cls(filename, media_bytes)
 
     @property
@@ -74,13 +74,13 @@ class Image(MediaClass):
 
     def validate(self):
         if not NAME_PAT.match(self.name):
-            raise CDNError('Invalid name')
+            raise CDNException('Invalid name')
 
-        if (extension := self.name.split('.')[-1]) not in IMAGE_TYPES:
-            raise CDNError('Invalid file type')
+        if (extension := self.name.split('.')[-1]) not in IMAGE_TYPES:  # todo: check based on file magic?
+            raise CDNException('Invalid file type')
 
         if self.bytes and len(self.bytes) > MAX_FILE_SIZE_BYTES:
-            raise CDNError('File too large')
+            raise CDNException('File too large')
 
         return extension
 
@@ -91,13 +91,13 @@ class Font(MediaClass):
 
     def validate(self):
         if not NAME_PAT.match(self.name):
-            raise CDNError('Invalid name')
+            raise CDNException('Invalid name')
 
         if (extension := self.name.split('.')[-1]) not in FONT_TYPES:
-            raise CDNError('Invalid file type')
+            raise CDNException('Invalid file type')
 
         if self.bytes and len(self.bytes) > MAX_FILE_SIZE_BYTES:
-            raise CDNError('File too large')
+            raise CDNException('File too large')
 
         return extension
 
