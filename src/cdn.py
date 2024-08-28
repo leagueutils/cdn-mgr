@@ -7,7 +7,7 @@ from subroutines import get_storage_path, get_symlink
 
 from leagueutils.components import db
 from leagueutils.components.mesh import MessageService, routes
-from leagueutils.errors import CDNError, NotFoundException
+from leagueutils.errors import CDNException, NotFoundException
 
 mesh = MessageService()
 
@@ -52,7 +52,7 @@ async def remove_media(media_class: str, name: str | None = None, link: str | No
     elif name:
         symlink = get_symlink(media_class, name)
     else:
-        raise CDNError('link or name must be provided')
+        raise CDNException('link or name must be provided')
 
     medium = MediaClass.from_class_name(media_class, symlink)
 
@@ -66,6 +66,22 @@ async def remove_media(media_class: str, name: str | None = None, link: str | No
     if other_links == 0:
         os.unlink(get_storage_path(medium, media_id))
         await db.execute('DELETE FROM cdn.media WHERE media_id=$1', media_id)
+
+
+@mesh.message_mapping(routes.CDN.RETRIEVE_MEDIA)
+async def retrieve_media(media_class: str, name: str | None = None, link: str | None = None) -> bytes:
+    if link:
+        symlink = link
+    elif name:
+        symlink = get_symlink(media_class, name)
+    else:
+        raise CDNException('link or name must be provided')
+
+    try:
+        async with aiofiles.open(symlink, 'rb') as infile:
+            return await infile.read()
+    except OSError as e:
+        raise CDNException('No such file') from e
 
 
 async def cleanup_expired_assets():  # todo: run periodically
