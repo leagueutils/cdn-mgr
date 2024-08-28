@@ -76,7 +76,7 @@ class Image(MediaClass):
         if not NAME_PAT.match(self.name):
             raise CDNException('Invalid name')
 
-        if (extension := self.name.split('.')[-1]) not in IMAGE_TYPES:
+        if (extension := self.name.split('.')[-1]) not in IMAGE_TYPES:  # todo: check based on file magic?
             raise CDNException('Invalid file type')
 
         if self.bytes and len(self.bytes) > MAX_FILE_SIZE_BYTES:
