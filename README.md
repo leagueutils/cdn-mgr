@@ -8,4 +8,13 @@ Assets go to /cdn sub-folders based on their media type:
 They are stored with their UUID media_id as the filename (plus filetype extension).
 
 The current sub-folder logic needs to be reworked to give control to the CDN manager
-Target architecture: `/assets/{media-class}/{id}[-{name}]/symlink`
+
+
+## Target architecture
+- for symlinks: `/assets/{media-class}/{filename}`, e.g. `/assets/tournaments/123.png`, `assets/teams/456.png`
+- for media: `/cdn/{media-type}/{media-id}.{extension}`, e.g. `/cdn/images/abcd-efgh.png`
+
+
+## Interface
+The public API of the CDN manager purely works on filenames and media classes. Folder structure, naming, deduplication
+and more are handled internally based on this information
