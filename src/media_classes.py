@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import abc
 import hashlib
 import os
@@ -16,14 +18,13 @@ MAX_FILE_SIZE_BYTES = 1234567  # todo: changeme
 
 
 class MediaClass(abc.ABC):
-    def __init__(self, filename: str, media_bytes: bytes | None = None):
-        self.bytes = media_bytes
-        self.name = filename
+    media_class: str = ''
+
+    def __init__(self):
         self.ttl = None
-        self.__extension = self.validate()
 
     @classmethod
-    def from_class_name(cls, media_class: str, filename: str, media_bytes: bytes | None = None):
+    def from_class_name(cls, media_class: str) -> MediaClass:
         match media_class:
             case 'team-logo':
                 _cls = TeamLogo
@@ -33,92 +34,85 @@ class MediaClass(abc.ABC):
                 _cls = TournamentLogo
             case 'league-logo':
                 _cls = LeagueLogo
-            case 'streamer-logo':
+            case 'creator-logo':
                 _cls = CreatorLogo
             case 'font':
                 _cls = Font
             case _:
                 raise CDNException('Invalid media type')
-        return _cls(filename, media_bytes)
+        return _cls()
 
-    @property
-    def media_class(self):
-        class_name = self.__class__.__name__
-        output = class_name[0].lower()
-        for char in class_name[1:]:
-            if char.isupper():
-                output += '-' + char.lower()
-            else:
-                output += char
-        return output
+    def get_storage_path(self, base_path: str, media_id: str, extension: str):
+        return os.path.join(f'{base_path}', self.media_class, f'{media_id}.{extension}')
 
-    @property
-    def storage_path_template(self):
-        return os.path.join('{base_path}', self.media_class, '{media_id}.' + self.__extension)
+    def get_symlink_path(self, base_path: str, name: str, extension: str):
+        return os.path.join(f'{base_path}', self.media_class.split('-')[0] + 's', f'{name}.{extension}')
 
     @abc.abstractmethod
-    def validate(self):
+    def validate(self, media_bytes: bytes, filename: str):
         pass
 
     @abc.abstractmethod
-    def hash(self):
+    def hash(self, media_bytes: bytes):
         pass
 
 
 class Image(MediaClass):
-    def hash(self):
-        bytes_as_np_array = np.frombuffer(self.bytes, dtype=np.uint8)
+    media_class = 'image'
+
+    def hash(self, media_bytes: bytes):
+        bytes_as_np_array = np.frombuffer(media_bytes, dtype=np.uint8)
         im = cv2.imdecode(bytes_as_np_array, cv2.IMREAD_GRAYSCALE)
         hsh = cv2.img_hash.BlockMeanHash.create()
         return hsh.compute(im)
 
-    def validate(self):
-        if not NAME_PAT.match(self.name):
+    def validate(self, media_bytes: bytes, filename: str):
+        if not NAME_PAT.match(filename):
             raise CDNException('Invalid name')
 
-        if (extension := self.name.split('.')[-1]) not in IMAGE_TYPES:  # todo: check based on file magic?
+        if filename.split('.')[-1] not in IMAGE_TYPES:  # todo: check based on file magic?
             raise CDNException('Invalid file type')
 
-        if self.bytes and len(self.bytes) > MAX_FILE_SIZE_BYTES:
+        if media_bytes and len(media_bytes) > MAX_FILE_SIZE_BYTES:
             raise CDNException('File too large')
-
-        return extension
 
 
 class Font(MediaClass):
-    def hash(self):
-        return hashlib.sha256(self.bytes, usedforsecurity=False)
+    media_class = 'font'
 
-    def validate(self):
-        if not NAME_PAT.match(self.name):
+    def hash(self, media_bytes: bytes):
+        return hashlib.sha256(media_bytes, usedforsecurity=False)
+
+    def validate(self, media_bytes: bytes, filename: str):
+        if not NAME_PAT.match(filename):
             raise CDNException('Invalid name')
 
-        if (extension := self.name.split('.')[-1]) not in FONT_TYPES:
+        if filename.split('.')[-1] not in FONT_TYPES:
             raise CDNException('Invalid file type')
 
-        if self.bytes and len(self.bytes) > MAX_FILE_SIZE_BYTES:
+        if media_bytes and len(media_bytes) > MAX_FILE_SIZE_BYTES:
             raise CDNException('File too large')
-
-        return extension
 
 
 class TeamLogo(Image):
-    def __init__(self, filename: str, media_bytes: bytes | None = None):
-        super().__init__(filename, media_bytes)
+    media_class = 'team-logo'
+
+    def __init__(self):
+        super().__init__()
         self.ttl = 15778800  # half a year, in seconds
 
 
 class ClanBadge(Image):
-    pass
+    media_class = 'clan-badge'
 
 
 class TournamentLogo(Image):
-    pass
+    media_class = 'tournament-logo'
 
 
 class LeagueLogo(Image):
-    pass
+    media_class = 'league-logo'
 
 
 class CreatorLogo(Image):
-    pass
+    media_class = 'creator-logo'
