@@ -3,14 +3,12 @@ import uuid
 
 import aiofiles
 from media_classes import MediaClass
+from subroutines import _remove_media, config, db
 
-from leagueutils.components import db
 from leagueutils.components.mesh import MessageService, routes
 from leagueutils.errors import CDNException, NotFoundException
-from leagueutils.models.cdn import Config
 
 mesh = MessageService()
-config = Config()
 
 
 @mesh.message_mapping(routes.CDN.STORE_MEDIA)
@@ -53,16 +51,7 @@ async def remove_media(media_class: str, filename: str):
     medium = MediaClass.from_class_name(media_class)
     symlink = medium.get_symlink_path(base_path=config.link_path, name=name, extension=extension)
 
-    try:
-        os.unlink(symlink)
-        [media_id] = await db.fetchrow('DELETE FROM cdn.links WHERE link=$1 RETURNING media_id', symlink)
-    except (NotFoundException, FileNotFoundError) as e:  # no linked image
-        raise CDNException('No such file') from e
-
-    [other_links] = await db.fetchrow('SELECT COUNT(*) FROM cdn.links WHERE media_id=$1')
-    if other_links == 0:
-        os.unlink(medium.get_storage_path(config.base_path, media_id, symlink.split('.')[-1]))
-        await db.execute('DELETE FROM cdn.media WHERE media_id=$1', media_id)
+    await _remove_media(medium, symlink)
 
 
 @mesh.message_mapping(routes.CDN.RETRIEVE_MEDIA)
@@ -93,4 +82,5 @@ async def cleanup_expired_assets():  # todo: run periodically
         return  # nothing to clean up
 
     for media_class, link in to_remove:
-        await remove_media(media_class, link)
+        medium = MediaClass.from_class_name(media_class)
+        await _remove_media(medium, link)
