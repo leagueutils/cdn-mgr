@@ -5,10 +5,13 @@ import aiofiles
 from media_classes import MediaClass
 from subroutines import _remove_media, config, db
 
+from leagueutils.components.logging import get_logger
 from leagueutils.components.mesh import MessageService, routes
 from leagueutils.errors import CDNException, NotFoundException
+from triggers import CronTrigger
 
 mesh = MessageService()
+logger = get_logger()
 
 
 @mesh.message_mapping(routes.CDN.STORE_MEDIA)
@@ -72,7 +75,8 @@ async def retrieve_media(media_class: str, filename: str) -> bytes:
         raise CDNException('No such file') from e
 
 
-async def cleanup_expired_assets():  # todo: run periodically
+@CronTrigger(cron_schedule='0 3 * * *', on_startup=False, logger=logger)  # run at 3:00 AM every day
+async def cleanup_expired_assets():
     try:
         to_remove = await db.fetch(
             """SELECT m.media_class, l.link from cdn.links l JOIN cdn.media m USING(media_id)

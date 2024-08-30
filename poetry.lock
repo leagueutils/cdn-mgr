@@ -110,7 +110,22 @@ files = [
 [package.dependencies]
 numpy = {version = ">=1.26.0", markers = "python_version >= \"3.12\""}
 
+[[package]]
+name = "triggers"
+version = "1.1.0"
+description = ""
+optional = false
+python-versions = "^3.9"
+files = []
+develop = false
+
+[package.source]
+type = "git"
+url = "https://github.com/leagueutils/async-triggers.git"
+reference = "HEAD"
+resolved_reference = "623355cb44c706d8f5d31c65b26d15d0e6100f39"
+
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "b2c40c365f933bb7f9724a485d42b08647e30f56bc5ac12023c7b8b0ce137a2c"
+content-hash = "f8f34a0fe15a29c0fbc9e768902b36dc1e6474e8ae3b322eb5d72d08f66f32a5"
