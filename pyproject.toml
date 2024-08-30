@@ -2,6 +2,7 @@
 requires-python = ">= 3.12"
 
 [tool.poetry]
+package-mode = false
 name = "cdn-mgr"
 version = "0.1.0"
 description = ""
@@ -13,6 +14,7 @@ python = "^3.12"
 aiofiles = "^24.1.0"
 opencv-python = "^4.10.0.82"
 opencv-contrib-python = "^4.10.0.82"
+triggers = {git = "https://github.com/leagueutils/async-triggers.git"}
 
 [build-system]
 requires = ["poetry-core"]
@@ -39,7 +41,7 @@ quote-style = "single"
 section-order = ["future", "standard-library", "third-party", "lu", "first-party", "local-folder"]
 
 [tool.ruff.isort.sections]
-lu = ["leagueutils"]
+lu = ["leagueutils", "triggers"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "pep257"
