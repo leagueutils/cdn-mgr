@@ -1,6 +1,6 @@
 import asyncio
 
-from cdn import mesh
+from service import mesh
 
 from triggers import start_triggers
 
