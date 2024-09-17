@@ -5,13 +5,14 @@ import aiofiles
 from subroutines import _remove_media, config, db
 
 from leagueutils.components.logging import get_logger
-from leagueutils.components.mesh import MessageService, routes
+from leagueutils.components.mesh import RMQMessageService
 from leagueutils.errors import DbNotFoundException, MediaNotFound
+from leagueutils.models import routes
 from triggers import CronTrigger
 
 from .media_classes import MediaClass
 
-mesh = MessageService()
+mesh = RMQMessageService()
 logger = get_logger()
 
 
