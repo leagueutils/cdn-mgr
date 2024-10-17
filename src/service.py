@@ -4,6 +4,7 @@ import uuid
 import aiofiles
 from subroutines import _remove_media, config, db
 
+import leagueutils.models.mesh as models
 from leagueutils.components.logging import get_logger
 from leagueutils.components.mesh import RMQMessageService
 from leagueutils.errors import DbNotFoundException, MediaNotFound
@@ -12,7 +13,7 @@ from triggers import CronTrigger
 
 from .media_classes import MediaClass
 
-mesh = RMQMessageService()
+mesh = RMQMessageService(models.ClientConfig())
 logger = get_logger()
 
 

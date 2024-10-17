@@ -2,7 +2,7 @@ import os
 
 from media_classes import MediaClass
 
-from leagueutils.compontens.db import DBService
+from leagueutils.components.db import DBService
 from leagueutils.errors import CDNException, DbNotFoundException
 from leagueutils.models.cdn import Config
 
@@ -16,7 +16,7 @@ async def _remove_media(medium: MediaClass, symlink: str):
         os.unlink(symlink)
         [media_id] = await db.fetchrow('DELETE FROM cdn.links WHERE link=$1 RETURNING media_id', symlink)
     except (DbNotFoundException, FileNotFoundError) as e:  # no linked image
-        raise CDNException('No such file') from e
+        raise CDNException(code=404, message='No such file') from e
 
     [other_links] = await db.fetchrow('SELECT COUNT(*) FROM cdn.links WHERE media_id=$1')
     if other_links == 0:

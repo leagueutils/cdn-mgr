@@ -39,7 +39,7 @@ class MediaClass(abc.ABC):
             case 'font':
                 _cls = Font
             case _:
-                raise CDNException('Invalid media type')
+                raise CDNException(code=400, message='Invalid media type')
         return _cls()
 
     @classmethod
@@ -70,13 +70,13 @@ class Image(MediaClass):
 
     def validate(self, media_bytes: bytes, filename: str):
         if not NAME_PAT.match(filename):
-            raise CDNException('Invalid name')
+            raise CDNException(code=400, message='Invalid name')
 
         if filename.split('.')[-1] not in IMAGE_TYPES:  # todo: check based on file magic?
-            raise CDNException('Invalid file type')
+            raise CDNException(code=400, message='Invalid file type')
 
         if media_bytes and len(media_bytes) > MAX_FILE_SIZE_BYTES:
-            raise CDNException('File too large')
+            raise CDNException(code=400, message='File too large')
 
 
 class Font(MediaClass):
@@ -87,13 +87,13 @@ class Font(MediaClass):
 
     def validate(self, media_bytes: bytes, filename: str):
         if not NAME_PAT.match(filename):
-            raise CDNException('Invalid name')
+            raise CDNException(code=400, message='Invalid name')
 
         if filename.split('.')[-1] not in FONT_TYPES:
-            raise CDNException('Invalid file type')
+            raise CDNException(code=400, message='Invalid file type')
 
         if media_bytes and len(media_bytes) > MAX_FILE_SIZE_BYTES:
-            raise CDNException('File too large')
+            raise CDNException(code=400, message='File too large')
 
 
 class TeamLogo(Image):
