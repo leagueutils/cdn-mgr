@@ -273,13 +273,13 @@ fn generate_image(
             );
             let (text_align, x) = match &ft.text_align.x as &str {
                 "l" => (TextAlign::Left, ft.offset.x),
-                "c" => (TextAlign::Center, ft.offset.x + (ft.size.width - width) / 2),
+                "m" => (TextAlign::Center, ft.offset.x + (ft.size.width - width) / 2),
                 "r" => (TextAlign::Right, ft.offset.x + ft.size.width - width),
                  &_ => todo!(),
             };
             let y = match &ft.text_align.y as &str {
                 "t" => ft.offset.y,
-                "c" => ft.offset.y + (ft.size.height - height) / 2,
+                "m" => ft.offset.y + (ft.size.height - height) / 2,
                 "b" => ft.offset.y + ft.size.height - height,
                  &_ => todo!(),
             };
