@@ -18,3 +18,8 @@ The current sub-folder logic needs to be reworked to give control to the CDN man
 ## Interface
 The public API of the CDN manager purely works on filenames and media classes. Folder structure, naming, deduplication
 and more are handled internally based on this information
+
+
+## Image Generation
+This service also houses infrastructure to generate images from templates and fillers, leveraging a custom-built Rust
+crate with Python bindings for maximum speed
