@@ -4,7 +4,6 @@ use std::path::Path;
 
 use image::{DynamicImage, GenericImageView, ImageBuffer, ImageFormat, ImageReader, Rgba};
 use imagetext::prelude::*;
-use imagetext::emoji::default_resolver::DefaultEmojiResolver;
 use pyo3::prelude::*;
 
 
@@ -286,7 +285,7 @@ fn generate_image(
             };
             let color = paint_from_rgb(ft.color.r, ft.color.g, ft.color.b);
             if &ft.wrap == "word" {
-                let _ = draw_text_wrapped_with_emojis(
+                let _ = draw_text_wrapped(
                     &mut bg,
                     &color,
                     Outline::None,
@@ -297,7 +296,6 @@ fn generate_image(
                     ft.size.width as f32,
                     scale(font_size as f32),
                     &font,
-                    DefaultEmojiResolver::<false>,
                     &ft.text,
                     1.0,
                     text_align,
@@ -305,7 +303,7 @@ fn generate_image(
                 );
             } else {
                 let lines = ft.text.lines().map(|s| s.to_string()).collect();
-                let _ = draw_text_multiline_with_emojis(
+                let _ = draw_text_multiline(
                     &mut bg,
                     &color,
                     Outline::None,
@@ -316,7 +314,6 @@ fn generate_image(
                     ft.size.width as f32,
                     scale(font_size as f32),
                     &font,
-                    DefaultEmojiResolver::<false>,
                     &lines,
                     1.0,
                     text_align,
