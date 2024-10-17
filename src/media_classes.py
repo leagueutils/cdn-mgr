@@ -42,11 +42,13 @@ class MediaClass(abc.ABC):
                 raise CDNException('Invalid media type')
         return _cls()
 
-    def get_storage_path(self, base_path: str, media_id: str, extension: str):
-        return os.path.join(f'{base_path}', self.media_class, f'{media_id}.{extension}')
+    @classmethod
+    def get_storage_path(cls, base_path: str, media_id: str, extension: str):
+        return os.path.join(f'{base_path}', cls.media_class, f'{media_id}.{extension}')
 
-    def get_symlink_path(self, base_path: str, name: str, extension: str):
-        return os.path.join(f'{base_path}', self.media_class.split('-')[0] + 's', f'{name}.{extension}')
+    @classmethod
+    def get_symlink_path(cls, base_path: str, name: str, extension: str):
+        return os.path.join(f'{base_path}', cls.media_class.split('-')[0] + 's', f'{name}.{extension}')
 
     @abc.abstractmethod
     def validate(self, media_bytes: bytes, filename: str):
