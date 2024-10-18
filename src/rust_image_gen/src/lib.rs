@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::io::Cursor;
 use std::path::Path;
 
-use image::{DynamicImage, GenericImageView, ImageBuffer, ImageFormat, ImageReader, Rgba};
+use image::{DynamicImage, GenericImageView, ImageBuffer, ImageFormat, ImageReader, Rgba, RgbaImage};
 use imagetext::prelude::*;
 use pyo3::prelude::*;
 
@@ -123,6 +123,39 @@ impl Color {
 
 #[pyclass]
 #[derive(FromPyObject)]
+pub struct BlankFiller {
+    pub color: Color,
+    pub offset: Offset,
+    pub size: Size,
+}
+
+#[pymethods]
+impl BlankFiller {
+    #[new]
+    #[pyo3(signature = (color, offset, size))]
+    fn new(color: Color, offset: Offset, size: Size) -> Self {
+        BlankFiller{color, offset, size}
+    }
+
+    #[getter]
+    fn color(&self) -> Color {
+        self.color
+    }
+
+    #[getter]
+    fn offset(&self) -> Offset {
+        self.offset
+    }
+
+    #[getter]
+    fn size(&self) -> Size {
+        self.size
+    }
+}
+
+
+#[pyclass]
+#[derive(FromPyObject)]
 pub struct ImageFiller {
     pub file_path: String,
     pub offset: Offset,
@@ -232,6 +265,37 @@ fn load_fonts(py: Python <'_>, fonts: HashMap<String, String>) {
 }
 
 
+//this function generates a mock image with all specified regions blanked out
+#[pyfunction]
+#[pyo3(signature = (background_file_path, fillers))]
+fn  generate_mock(py: Python <'_>, background_file_path: String, fillers: Vec<BlankFiller>) -> PyResult<Vec<u8>> {
+    py.allow_threads(|| -> PyResult<Vec<u8>> {
+        //initialize the background image
+        let mut bg = ImageReader::open(background_file_path)?.with_guessed_format()?.decode().map_err(|e| {
+            PyErr::new::<pyo3::exceptions::PyValueError, _>(format!("Failed to load background image: {}", e))
+        })?.into_rgba8();
+
+        //paste all blanks onto the background
+        for filler in fillers {
+            let blank_patch = ImageBuffer::from_pixel(
+                filler.size.width.try_into().unwrap(),
+                filler.size.height.try_into().unwrap(),
+                Rgba([filler.color.r, filler.color.g, filler.color.g, 255])
+            );
+            image::imageops::overlay(
+                &mut bg,
+                &blank_patch,
+                filler.offset.x.try_into().unwrap(),
+                filler.offset.y.try_into().unwrap()
+            );
+        }
+
+        let buffer = to_buffer(bg);
+        return Ok(buffer)
+    })
+}
+
+
 //this function generates an image based on the specified background and fillers
 #[pyfunction]
 #[pyo3(signature = (background_file_path, filler_images, filler_texts, font_names))]
@@ -321,9 +385,7 @@ fn generate_image(
             }
         }
 
-        let mut buffer = Vec::new();
-        let mut cursor = Cursor::new(&mut buffer);
-        bg.write_to(&mut cursor, ImageFormat::Png).unwrap();
+        let buffer = to_buffer(bg);
         return Ok(buffer)
     })
 }
@@ -345,6 +407,14 @@ fn smart_rescale(
     }
 
     return output_img;
+}
+
+
+fn to_buffer(img: RgbaImage) -> Vec<u8> {
+    let mut buffer = Vec::new();
+    let mut cursor = Cursor::new(&mut img);
+    img.write_to(&mut cursor, ImageFormat::Png).unwrap();
+    return buffer
 }
 
 
@@ -409,12 +479,10 @@ fn rust_image_gen(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Color>()?;
     m.add_class::<ImageFiller>()?;
     m.add_class::<TextFiller>()?;
+    m.add_class::<BlankFiller>()?;
 
-    m.add_function(
-        wrap_pyfunction!(generate_image, m)?
-    )?;
-    m.add_function(wrap_pyfunction!(
-        load_fonts, m)?
-    )?;
+    m.add_function(wrap_pyfunction!(generate_image, m)?)?;
+    m.add_function(wrap_pyfunction!(generate_mock, m)?)?;
+    m.add_function(wrap_pyfunction!(load_fonts, m)?)?;
     Ok(())
 }
