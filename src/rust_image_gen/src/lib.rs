@@ -123,18 +123,18 @@ impl Color {
 
 #[pyclass]
 #[derive(FromPyObject)]
-pub struct BlankFiller {
+pub struct BlankComponent {
     pub color: Color,
     pub offset: Offset,
     pub size: Size,
 }
 
 #[pymethods]
-impl BlankFiller {
+impl BlankComponent {
     #[new]
     #[pyo3(signature = (color, offset, size))]
     fn new(color: Color, offset: Offset, size: Size) -> Self {
-        BlankFiller{color, offset, size}
+        BlankComponent{color, offset, size}
     }
 
     #[getter]
@@ -156,18 +156,18 @@ impl BlankFiller {
 
 #[pyclass]
 #[derive(FromPyObject)]
-pub struct ImageFiller {
+pub struct ImageComponent {
     pub file_path: String,
     pub offset: Offset,
     pub size: Size,
 }
 
 #[pymethods]
-impl ImageFiller {
+impl ImageComponent {
     #[new]
     #[pyo3(signature = (file_path, offset, size))]
     fn new(file_path: String, offset: Offset, size: Size) -> Self {
-        ImageFiller{file_path, offset, size}
+        ImageComponent{file_path, offset, size}
     }
 
     #[getter]
@@ -189,7 +189,7 @@ impl ImageFiller {
 
 #[pyclass]
 #[derive(FromPyObject)]
-pub struct TextFiller {
+pub struct TextComponent {
     pub text: String,
     pub offset: Offset,
     pub size: Size,
@@ -201,11 +201,11 @@ pub struct TextFiller {
 }
 
 #[pymethods]
-impl TextFiller {
+impl TextComponent {
     #[new]
     #[pyo3(signature = (text, offset, size, color, min_font_size, max_font_size, text_align, wrap))]
     fn new(text: String, offset: Offset, size: Size, color: Color, min_font_size: u32, max_font_size: u32, text_align: TextAlignment, wrap: String) -> Self {
-        TextFiller{text: text, offset: offset, size: size, color: color, min_font_size: min_font_size, max_font_size: max_font_size, text_align: text_align, wrap: wrap}
+        TextComponent{text: text, offset: offset, size: size, color: color, min_font_size: min_font_size, max_font_size: max_font_size, text_align: text_align, wrap: wrap}
     }
 
     #[getter]
@@ -268,7 +268,7 @@ fn load_fonts(py: Python <'_>, fonts: HashMap<String, String>) {
 //this function generates a mock image with all specified regions blanked out
 #[pyfunction]
 #[pyo3(signature = (background_file_path, fillers))]
-fn  generate_mock(py: Python <'_>, background_file_path: String, fillers: Vec<BlankFiller>) -> PyResult<Vec<u8>> {
+fn  generate_mock(py: Python <'_>, background_file_path: String, fillers: Vec<BlankComponent>) -> PyResult<Vec<u8>> {
     py.allow_threads(|| -> PyResult<Vec<u8>> {
         //initialize the background image
         let mut bg = ImageReader::open(background_file_path)?.with_guessed_format()?.decode().map_err(|e| {
@@ -302,8 +302,8 @@ fn  generate_mock(py: Python <'_>, background_file_path: String, fillers: Vec<Bl
 fn generate_image(
     py: Python <'_>,
     background_file_path: String,
-    filler_images: Vec<ImageFiller>,
-    filler_texts: Vec<TextFiller>,
+    filler_images: Vec<ImageComponent>,
+    filler_texts: Vec<TextComponent>,
     font_names: Vec<String>,
 ) -> PyResult<Vec<u8>> {
     py.allow_threads(|| -> PyResult<Vec<u8>> {
@@ -477,9 +477,9 @@ fn rust_image_gen(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<TextAlignment>()?;
     m.add_class::<Size>()?;
     m.add_class::<Color>()?;
-    m.add_class::<ImageFiller>()?;
-    m.add_class::<TextFiller>()?;
-    m.add_class::<BlankFiller>()?;
+    m.add_class::<ImageComponent>()?;
+    m.add_class::<TextComponent>()?;
+    m.add_class::<BlankComponent>()?;
 
     m.add_function(wrap_pyfunction!(generate_image, m)?)?;
     m.add_function(wrap_pyfunction!(generate_mock, m)?)?;
