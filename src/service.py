@@ -1,8 +1,5 @@
-import os
-import uuid
-
 import aiofiles
-from subroutines import _remove_media, config, db
+from subroutines import config, db, delete_media, store_media
 
 import leagueutils.models.mesh as models
 from leagueutils.components.logging import get_logger
@@ -18,31 +15,17 @@ logger = get_logger()
 
 
 @mesh.message_mapping(routes.CDN.STORE_MEDIA)
-async def add_media(media_bytes: bytes, media_class: str, filename: str):
-    """store a medium in the cdn
+async def add_media(media_bytes: bytes, media_class: str, filename: str | None):
+    """store a medium under a given name in the cdn
     :param media_bytes: a byte stream containing the medium to be stored
     :param media_class: the class of the medium
     :param filename: the target name for the symlink. Format: filename.extension
     """
 
     medium = MediaClass.from_class_name(media_class)
-    media_hash = medium.hash(media_bytes)
-    try:
-        [media_id] = await db.fetchrow('SELECT media_id FROM cdn.media WHERE hash=$1', media_hash)
-        store = False
-    except DbNotFoundException:
-        store = True
-        media_id = str(uuid.uuid4())
+    medium.validate(media_bytes)
 
-    name, extension = filename.split('.')
-    fp = medium.get_storage_path(base_path=config.base_path, media_id=media_id, extension=extension)
-    if store:
-        async with aiofiles.open(fp, 'wb+') as outfile:
-            await outfile.write(media_bytes)
-        await db.execute('INSERT INTO cdn.media VALUES ($1, $2) RETURNING media_id', media_id, media_hash)
-    symlink = medium.get_symlink_path(base_path=config.link_path, name=name, extension=extension)
-    os.link(fp, symlink)
-    await db.execute('INSERT INTO cdn.links VALUES ($1, $2, $3)', media_id, symlink, medium.ttl)
+    await store_media(medium, media_bytes, filename)
 
 
 @mesh.message_mapping(routes.CDN.DELETE_MEDIA)
@@ -53,11 +36,10 @@ async def remove_media(media_class: str, filename: str):
     :param filename: the target name. Format: filename.extension
     """
 
-    name, extension = filename.split('.')
     medium = MediaClass.from_class_name(media_class)
-    symlink = medium.get_symlink_path(base_path=config.link_path, name=name, extension=extension)
+    symlink = medium.get_symlink_path(base_path=config.link_path, filename=filename)
 
-    await _remove_media(medium, symlink)
+    await delete_media(medium, symlink)
 
 
 @mesh.message_mapping(routes.CDN.RETRIEVE_MEDIA)
@@ -68,9 +50,8 @@ async def retrieve_media(media_class: str, filename: str) -> bytes:
     :return: the file contents
     """
 
-    name, extension = filename.split('.')
     medium = MediaClass.from_class_name(media_class)
-    symlink = medium.get_symlink_path(base_path=config.link_path, name=name, extension=extension)
+    symlink = medium.get_symlink_path(base_path=config.link_path, filename=filename)
     try:
         async with aiofiles.open(symlink, 'rb') as infile:
             return await infile.read()
@@ -90,4 +71,4 @@ async def cleanup_expired_assets():
 
     for media_class, link in to_remove:
         medium = MediaClass.from_class_name(media_class)
-        await _remove_media(medium, link)
+        await delete_media(medium, link)

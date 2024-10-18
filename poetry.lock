@@ -620,6 +620,17 @@ colorama = {version = "*", markers = "sys_platform == \"win32\""}
 development = ["black", "flake8", "mypy", "pytest", "types-colorama"]
 
 [[package]]
+name = "filetype"
+version = "1.2.0"
+description = "Infer file type and MIME type of any file/buffer. No external dependencies."
+optional = false
+python-versions = "*"
+files = [
+    {file = "filetype-1.2.0-py2.py3-none-any.whl", hash = "sha256:7ce71b6880181241cf7ac8697a2f1eb6a8bd9b429f7ad6d27b8db9ba5f1c2d25"},
+    {file = "filetype-1.2.0.tar.gz", hash = "sha256:66b56cd6474bf41d8c54660347d37afcc3f7d1970648de365c102ef77548aadb"},
+]
+
+[[package]]
 name = "frozenlist"
 version = "1.4.1"
 description = "A list-like structure which implements collections.abc.MutableSequence"
@@ -1639,18 +1650,19 @@ files = [
 
 [[package]]
 name = "triggers"
-version = "1.1.0"
+version = "1.1.1"
 description = ""
 optional = false
-python-versions = "^3.9"
-files = []
-develop = false
+python-versions = ">=3.9,<4.0"
+files = [
+    {file = "triggers-1.1.1-py3-none-any.whl", hash = "sha256:4a4d40c806aeae877e64bf85ef5daf2ca9ea100b2b842b6488a62696bb369ea8"},
+    {file = "triggers-1.1.1.tar.gz", hash = "sha256:d4e73a999b11d6650095b647732b5363500a69380f1c9087339028c8a5dd2588"},
+]
 
 [package.source]
-type = "git"
-url = "https://github.com/leagueutils/async-triggers.git"
-reference = "HEAD"
-resolved_reference = "623355cb44c706d8f5d31c65b26d15d0e6100f39"
+type = "legacy"
+url = "http://localhost:3141/packages/stable/+simple"
+reference = "lu-private"
 
 [[package]]
 name = "typing-extensions"
@@ -1866,4 +1878,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.12, <3.14"
-content-hash = "954e8e1e38e33ea650ae913166cc84ce485c1d258ca0160418368118dba4485f"
+content-hash = "ef4d2595672d43ba8ee72272cd5dcef24172de1b8bdab3e17e5ca0deeafa7822"
