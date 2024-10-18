@@ -412,7 +412,7 @@ fn smart_rescale(
 
 fn to_buffer(img: RgbaImage) -> Vec<u8> {
     let mut buffer = Vec::new();
-    let mut cursor = Cursor::new(&mut img);
+    let mut cursor = Cursor::new(&mut buffer);
     img.write_to(&mut cursor, ImageFormat::Png).unwrap();
     return buffer
 }
