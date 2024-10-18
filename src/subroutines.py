@@ -4,13 +4,13 @@ import uuid
 import aiofiles
 import filetype
 
+import leagueutils.models.cdn as cdn_models
 from leagueutils.components.db import DBService
 from leagueutils.errors import CDNException, DbNotFoundException
-from leagueutils.models.cdn import Config
 
 from .media_classes import MediaClass
 
-config = Config()
+config = cdn_models.Config()
 db = DBService()
 
 
@@ -56,3 +56,18 @@ async def store_media(media_class: MediaClass, media_bytes: bytes, filename: str
         os.link(fp, symlink)
         await db.execute('INSERT INTO cdn.links VALUES ($1, $2, $3)', media_id, symlink, media_class.ttl)
     return media_id
+
+
+async def store_components(template_id: str, components: [cdn_models.ImageComponent | cdn_models.TextComponent]):
+    """subroutine to store components for a template"""
+
+    data = []
+    for component in components:
+        data.append(
+            (
+                template_id,
+                'image' if isinstance(component, cdn_models.ImageComponent) else 'text',
+                component.model_dump(),
+            )
+        )
+    await db.execute('INSERT INTO gfx.template_components VALUES ($1, $2, $3)', data)

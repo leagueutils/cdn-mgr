@@ -36,6 +36,8 @@ class MediaClass(abc.ABC):
                 _cls = LeagueLogo
             case 'creator-logo':
                 _cls = CreatorLogo
+            case 'template':
+                _cls = Template
             case 'font':
                 _cls = Font
             case _:
@@ -107,3 +109,7 @@ class LeagueLogo(Image):
 
 class CreatorLogo(Image):
     media_class = 'creator-logo'
+
+
+class Template(Image):
+    media_class = 'template'
