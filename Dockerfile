@@ -9,6 +9,7 @@ ENV RUSTUP_HOME=/usr/local/rustup \
     PATH=/usr/local/cargo/bin:$PATH \
     RUST_VERSION=1.82.0
 
+# install Rust
 RUN set -eux; \
     apt-get update; \
     apt-get install -y --no-install-recommends \
@@ -31,9 +32,9 @@ RUN set -eux; \
     wget "$url"; \
     echo "${rustupSha256} *rustup-init" | sha256sum -c -; \
     chmod +x rustup-init; \
-    ./rustup-init -y --no-modify-path --profile minimal --default-toolchain $RUST_VERSION --default-host ${rustArch}; \
+    ./rustup-init -y --no-modify-path --profile minimal --default-toolchain "$RUST_VERSION" --default-host ${rustArch}; \
     rm rustup-init; \
-    chmod -R a+w $RUSTUP_HOME $CARGO_HOME; \
+    chmod -R a+w "$RUSTUP_HOME" "$CARGO_HOME"; \
     rustup --version; \
     cargo --version; \
     rustc --version; \
@@ -42,9 +43,8 @@ RUN set -eux; \
         ; \
     rm -rf /var/lib/apt/lists/*;
 
-RUN cargo build
-
-RUN pip install .
+    && cargo build
+    && pip install .
 
 
 # "actual" image
@@ -57,10 +57,11 @@ COPY --from=builder --chown=app_user:app_user /workspace/target/wheels/ ./wheels
 COPY pyproject.toml .
 COPY /src ./src
 RUN rm -r ./src/rust_image_gen
-
-RUN adduser app_user
+    && adduser app_user
 USER app_user
 
-RUN python -m pip install -U poetry==1.8.3 && python -m poetry add `find ./wheels ! -wholename ./wheels | head -1` && python -m poetry install
+RUN python -m pip install -U poetry==1.8.3
+    && python -m poetry add `find ./wheels ! -wholename ./wheels | head -1`
+    && python -m poetry install
 
 CMD ["python",  "./src/main.py"]
