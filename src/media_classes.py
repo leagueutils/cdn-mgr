@@ -45,7 +45,7 @@ class MediaClass(abc.ABC):
         return _cls()
 
     @classmethod
-    def get_storage_path(cls, base_path: str, media_id: str, extension: str):
+    def get_storage_path(cls, base_path: str, media_id: str, extension: str = 'png'):
         return os.path.join(f'{base_path}', cls.media_class, f'{media_id}.{extension}')
 
     @classmethod

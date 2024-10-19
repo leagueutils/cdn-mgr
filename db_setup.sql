@@ -23,5 +23,10 @@ CREATE TABLE gfx.templates(
 CREATE TABLE gfx.template_components(
     template_id UUID REFERENCES gfx.templates(template_id) ON DELETE CASCADE,
     component_type VARCHAR(8),
-    component_value JSONB,
+    component_value JSONB
+);
+
+CREATE TABLE gfx.fonts(
+    font_path VARCHAR(128) REFERENCES cdn.links(link) ON DELETE CASCADE,
+    tournament_id INTEGER PRIMARY KEY
 );
