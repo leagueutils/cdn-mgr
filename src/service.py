@@ -8,7 +8,7 @@ from leagueutils.components.mesh import RMQMessageService
 from leagueutils.errors import DbNotFoundException, MediaNotFound
 from leagueutils.models import routes
 from leagueutils.models.cdn import ImagePlaceholder, TextComponent
-from rust_image_gen import generate_image, generate_mock
+from rust_image_gen import generate_image
 from triggers import CronTrigger
 
 from .media_classes import MediaClass, Template
@@ -181,24 +181,13 @@ async def create_graphic(template: cdn_models.CompiledGraphicsTemplate) -> bytes
     :return: a byte stream containing the generated image
     """
 
-    images, text, _ = rust_component_converter(template.components)
+    images, text = rust_component_converter(template.components)
     return generate_image(
         Template.get_storage_path(config.base_path, template.media_id),
         images,
         text,
         [template.font_name, *FALLBACK_FONTS],
     )
-
-
-@mesh.message_mapping(routes.CDN.MOCK_GRAPHICS)
-async def create_mockup(template: cdn_models.CompiledGraphicsTemplate) -> bytes:
-    """generate a mockup with all components blanked out according to the template specifications
-    :param template: the compiled template
-    :return: a byte stream containing the generated mockup
-    """
-
-    _, _, blanks = rust_component_converter(template.components)
-    return generate_mock(Template.get_storage_path(config.base_path, template.media_id), blanks)
 
 
 @CronTrigger(cron_schedule='0 3 * * *', on_startup=False, logger=logger)  # run at 3:00 AM every day

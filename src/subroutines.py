@@ -6,7 +6,7 @@ from aiofiles import os
 import leagueutils.models.cdn as cdn_models
 from leagueutils.components.db import DBService
 from leagueutils.errors import CDNException, DbNotFoundException
-from rust_image_gen import BlankComponent, Color, ImageComponent, Offset, Size, TextAlignment, TextComponent
+from rust_image_gen import Color, ImageComponent, Offset, Size, TextAlignment, TextComponent
 
 from .media_classes import MediaClass
 
@@ -70,10 +70,10 @@ async def store_components(template_id: str, components: [cdn_models.ImagePlaceh
 
 def rust_component_converter(
     components: list[cdn_models.BlankComponent, cdn_models.ImageComponent, cdn_models.TextComponent],
-) -> tuple[list[ImageComponent], list[TextComponent], list[BlankComponent]]:
+) -> tuple[list[ImageComponent], list[TextComponent]]:
     """convert a list of models into Rust-compatible classes"""
 
-    images, text, blank = [], [], []
+    images, text = [], []
     for component in components:
         model = component.model_dump()
         for name, value in model.items():  # convert sub-classes
@@ -93,7 +93,5 @@ def rust_component_converter(
                 images.append(ImageComponent(**model))
             case 'TextComponent':
                 text.append(TextComponent(**model))
-            case 'BlankComponent':
-                blank.append(BlankComponent(**model))
 
-    return images, text, blank
+    return images, text

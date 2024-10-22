@@ -123,39 +123,6 @@ impl Color {
 
 #[pyclass]
 #[derive(FromPyObject)]
-pub struct BlankComponent {
-    pub color: Color,
-    pub offset: Offset,
-    pub size: Size,
-}
-
-#[pymethods]
-impl BlankComponent {
-    #[new]
-    #[pyo3(signature = (color, offset, size))]
-    fn new(color: Color, offset: Offset, size: Size) -> Self {
-        BlankComponent{color, offset, size}
-    }
-
-    #[getter]
-    fn color(&self) -> Color {
-        self.color
-    }
-
-    #[getter]
-    fn offset(&self) -> Offset {
-        self.offset
-    }
-
-    #[getter]
-    fn size(&self) -> Size {
-        self.size
-    }
-}
-
-
-#[pyclass]
-#[derive(FromPyObject)]
 pub struct ImageComponent {
     pub file_path: String,
     pub offset: Offset,
@@ -262,37 +229,6 @@ fn load_fonts(py: Python <'_>, fonts: HashMap<String, String>) {
 
         }
     });
-}
-
-
-//this function generates a mock image with all specified regions blanked out
-#[pyfunction]
-#[pyo3(signature = (background_file_path, fillers))]
-fn  generate_mock(py: Python <'_>, background_file_path: String, fillers: Vec<BlankComponent>) -> PyResult<Vec<u8>> {
-    py.allow_threads(|| -> PyResult<Vec<u8>> {
-        //initialize the background image
-        let mut bg = ImageReader::open(background_file_path)?.with_guessed_format()?.decode().map_err(|e| {
-            PyErr::new::<pyo3::exceptions::PyValueError, _>(format!("Failed to load background image: {}", e))
-        })?.into_rgba8();
-
-        //paste all blanks onto the background
-        for filler in fillers {
-            let blank_patch = ImageBuffer::from_pixel(
-                filler.size.width.try_into().unwrap(),
-                filler.size.height.try_into().unwrap(),
-                Rgba([filler.color.r, filler.color.g, filler.color.g, 255])
-            );
-            image::imageops::overlay(
-                &mut bg,
-                &blank_patch,
-                filler.offset.x.try_into().unwrap(),
-                filler.offset.y.try_into().unwrap()
-            );
-        }
-
-        let buffer = to_buffer(bg);
-        return Ok(buffer)
-    })
 }
 
 
@@ -479,10 +415,8 @@ fn rust_image_gen(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Color>()?;
     m.add_class::<ImageComponent>()?;
     m.add_class::<TextComponent>()?;
-    m.add_class::<BlankComponent>()?;
 
     m.add_function(wrap_pyfunction!(generate_image, m)?)?;
-    m.add_function(wrap_pyfunction!(generate_mock, m)?)?;
     m.add_function(wrap_pyfunction!(load_fonts, m)?)?;
     Ok(())
 }
