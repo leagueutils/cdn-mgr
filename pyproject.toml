@@ -10,11 +10,18 @@ authors = ["lukasthaler <33826427+lukasthaler@users.noreply.github.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = ">=3.12, <3.14"
 aiofiles = "^24.1.0"
 opencv-python = "^4.10.0.82"
 opencv-contrib-python = "^4.10.0.82"
-triggers = {git = "https://github.com/leagueutils/async-triggers.git"}
+leagueutils = {version = "^0.0.2", source = "lu-private"}
+filetype = "^1.2.0"
+triggers = {version = "^1.1.1", source = "lu-private"}
+
+[[tool.poetry.source]]
+name = "lu-private"
+url = "http://localhost:3141/packages/stable/+simple/"
+priority = "explicit"
 
 [build-system]
 requires = ["poetry-core"]
@@ -41,7 +48,7 @@ quote-style = "single"
 section-order = ["future", "standard-library", "third-party", "lu", "first-party", "local-folder"]
 
 [tool.ruff.isort.sections]
-lu = ["leagueutils", "triggers"]
+lu = ["leagueutils", "rust_image_gen", "triggers"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "pep257"

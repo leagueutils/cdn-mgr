@@ -1,0 +1,13 @@
+[package]
+name = "rust_image_gen"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "rust_image_gen"
+crate-type = ["cdylib"]
+
+[dependencies]
+image = "0.25.2"
+imagetext = { git = "https://github.com/nathanielfernandes/imagetext", version = "2.1.1", features = ["default-resolver", "emoji", "emojis", "fontdb", "hashbrown", "log", "once_cell", "regex"] }
+pyo3 = "0.22.4"
