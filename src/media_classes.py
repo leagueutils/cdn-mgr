@@ -9,6 +9,7 @@ import filetype
 import numpy as np
 
 from leagueutils.errors import CDNException
+from leagueutils.models.cdn import MediaClass as MediaClassModel
 
 IMAGE_TYPES = ['image/jpeg', 'image/png']
 FONT_TYPES = ['application/font-sfnt']
@@ -24,21 +25,23 @@ class MediaClass(abc.ABC):
         self.ttl = None
 
     @classmethod
-    def from_class_name(cls, media_class: str) -> MediaClass:
+    def from_class_name(cls, media_class: MediaClassModel) -> MediaClass:
         match media_class:
-            case 'team-logo':
+            case MediaClassModel.team_logo:
                 _cls = TeamLogo
-            case 'clan-badge':
+            case MediaClassModel.clan_badge:
                 _cls = ClanBadge
-            case 'tournament-logo':
+            case MediaClassModel.tournament_logo:
                 _cls = TournamentLogo
-            case 'league-logo':
+            case MediaClassModel.league_logo:
                 _cls = LeagueLogo
-            case 'creator-logo':
+            case MediaClassModel.creator_logo:
                 _cls = CreatorLogo
-            case 'template':
+            case MediaClassModel.platform_icon:
+                _cls = PlatformIcon
+            case MediaClassModel.template:
                 _cls = Template
-            case 'font':
+            case MediaClassModel.font:
                 _cls = Font
             case _:
                 raise CDNException(code=400, message='Invalid media type')
@@ -109,6 +112,10 @@ class LeagueLogo(Image):
 
 class CreatorLogo(Image):
     media_class = 'creator-logo'
+
+
+class PlatformIcon(Image):
+    media_class = 'platform-icon'
 
 
 class Template(Image):
