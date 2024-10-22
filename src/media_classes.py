@@ -46,11 +46,11 @@ class MediaClass(abc.ABC):
 
     @classmethod
     def get_storage_path(cls, base_path: str, media_id: str, extension: str = 'png'):
-        return os.path.join(f'{base_path}', cls.media_class, f'{media_id}.{extension}')
+        return os.path.join(f'{base_path}', f'{media_id}.{extension}')
 
     @classmethod
     def get_symlink_path(cls, base_path: str, filename: str):
-        return os.path.join(f'{base_path}', cls.media_class.split('-')[0] + 's', filename)
+        return os.path.join(f'{base_path}', cls.media_class + 's', filename)
 
     @classmethod
     def validate(cls, media_bytes: bytes):
