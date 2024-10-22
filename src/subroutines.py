@@ -90,6 +90,9 @@ def rust_component_converter(
 
         match component.__class__.__name__:
             case 'ImageComponent':
+                model['file_path'] = MediaClass.from_class_name(
+                    cdn_models.MediaClass(model.pop('media_class'))
+                ).get_symlink_path(config.link_path, model.pop('file_name'))
                 images.append(ImageComponent(**model))
             case 'TextComponent':
                 text.append(TextComponent(**model))

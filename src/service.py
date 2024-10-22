@@ -182,11 +182,13 @@ async def create_graphic(template: cdn_models.CompiledGraphicsTemplate) -> bytes
     """
 
     images, text = rust_component_converter(template.components)
-    return generate_image(
-        Template.get_storage_path(config.base_path, template.media_id),
-        images,
-        text,
-        [template.font_name, *FALLBACK_FONTS],
+    return bytes(
+        generate_image(
+            Template.get_storage_path(config.base_path, template.media_id),
+            images,
+            text,
+            [template.font_name, *FALLBACK_FONTS],
+        )
     )
 
 
