@@ -5,7 +5,7 @@ from aiofiles import os
 
 import leagueutils.models.cdn as cdn_models
 from leagueutils.components.db import DBService
-from leagueutils.errors import CDNException, DbNotFoundException
+from leagueutils.errors import DbNotFoundException, MediaNotFound
 from rust_image_gen import Color, ImageComponent, Offset, Size, TextAlignment, TextComponent
 
 from .media_classes import MediaClass
@@ -21,7 +21,7 @@ async def delete_media(media_class: MediaClass, symlink: str):
         await os.unlink(symlink)
         [media_id] = await db.fetchrow('DELETE FROM cdn.links WHERE link=$1 RETURNING media_id', symlink)
     except (DbNotFoundException, FileNotFoundError) as e:  # no linked image
-        raise CDNException(code=404, message='No such file') from e
+        raise MediaNotFound(message='No such file') from e
 
     [other_links] = await db.fetchrow('SELECT COUNT(*) FROM cdn.links WHERE media_id=$1')
     if other_links == 0:
@@ -51,6 +51,18 @@ async def store_media(media_class: MediaClass, media_bytes: bytes, filename: str
     await os.link(fp, symlink)
     await db.execute('INSERT INTO cdn.links VALUES ($1, $2, $3)', media_id, symlink, media_class.ttl)
     return media_id
+
+
+async def rename_media(media_class: MediaClass, old_filename: str, new_filename: str):
+    """subroutine to rename a medium"""
+
+    try:
+        old_symlink = media_class.get_symlink_path(base_path=config.link_path, filename=old_filename)
+        new_symlink = media_class.get_symlink_path(base_path=config.link_path, filename=new_filename)
+        await os.rename(old_symlink, new_symlink)
+        await db.execute('UPDATE cdn.links SET link=$1 WHERE link=$2', new_symlink, old_symlink)
+    except FileNotFoundError as e:
+        raise MediaNotFound(message='No such file') from e
 
 
 async def store_components(template_id: str, components: [cdn_models.ImagePlaceholder | cdn_models.TextPlaceholder]):
