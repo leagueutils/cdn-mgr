@@ -12,7 +12,16 @@ from rust_image_gen import generate_image
 from triggers import CronTrigger
 
 from .media_classes import MediaClass, Template
-from .subroutines import config, db, delete_media, rename_media, rust_component_converter, store_components, store_media
+from .subroutines import (
+    add_symlink,
+    config,
+    db,
+    delete_media,
+    rename_media,
+    rust_component_converter,
+    store_components,
+    store_media,
+)
 
 # todo: fill these
 DEFAULT_FONT_PATH = ''
@@ -82,13 +91,24 @@ async def rename_media_(media_class: str, old_filename: str, new_filename: str):
 @mesh.message_mapping(routes.CDN.MEDIA_EXISTS)
 async def check_media_existence(media_class: str, filename: str) -> bool:
     """check if a medium exists
-    :param media_class:  the class of the medium
+    :param media_class: the class of the medium
     :param filename: the target name. Format: filename.extension
     :return: whether the medium exists
     """
     medium = MediaClass.from_class_name(media_class)
     symlink = medium.get_symlink_path(base_path=config.link_path, filename=filename)
     return await os.path.exists(symlink)
+
+
+@mesh.message_mapping(routes.CDN.ADD_SYMLINK)
+async def clone_media(media_class: str, old_filename: str, new_filename: str):
+    """make a medium available under a new symlink
+    :param media_class: the class of the medium
+    :param old_filename: the old filename
+    :param new_filename: the new filename
+    """
+    medium = MediaClass.from_class_name(media_class)
+    await add_symlink(medium, old_filename, new_filename)
 
 
 @mesh.message_mapping(routes.CDN.CREATE_TEMPLATE)

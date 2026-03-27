@@ -65,6 +65,22 @@ async def rename_media(media_class: MediaClass, old_filename: str, new_filename:
         raise MediaNotFound(message='No such file') from e
 
 
+async def add_symlink(media_class: MediaClass, old_filename: str, new_filename):
+    """subroutine to add a new symlink for an existing medium"""
+
+    old_symlink = media_class.get_symlink_path(base_path=config.link_path, filename=old_filename)
+    try:
+        [media_id] = await db.fetchrow('SELECT media_id FROM cdn.links WHERE link=$1', old_symlink)
+    except DbNotFoundException as e:
+        raise MediaNotFound(message='No such file') from e
+
+    extension = old_filename.split('.')[-1]
+    fp = media_class.get_storage_path(base_path=config.base_path, media_id=media_id, extension=extension)
+    new_symlink = media_class.get_symlink_path(base_path=config.link_path, filename=new_filename)
+    await os.link(fp, new_symlink)
+    await db.execute('INSERT INTO cdn.links VALUES ($1, $2, $3)', media_id, new_symlink, media_class.ttl)
+
+
 async def store_components(template_id: str, components: [cdn_models.ImagePlaceholder | cdn_models.TextPlaceholder]):
     """subroutine to store components for a template"""
 
