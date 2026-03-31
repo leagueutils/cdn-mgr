@@ -264,6 +264,19 @@ async def copy_template(template_type: str, source_tournament_id: int, target_to
         raise MediaNotFound('Missing or empty template') from e
 
 
+@mesh.message_mapping(routes.CDN.LIST_TEMPLATES)
+async def list_templates(tournament_id: int) -> list[MediaClassModel]:
+    """list all configured templates for a tournament
+    :param tournament_id: the tournament id
+    """
+
+    try:
+        templates = await db.fetch('SELECT template_type FROM gfx.templates WHERE tournament_id=$1', tournament_id)
+        return [MediaClassModel(template[0]) for template in templates]
+    except DbNotFoundException:
+        return []
+
+
 @mesh.message_mapping(routes.CDN.CREATE_GRAPHICS)
 async def create_graphic(template: cdn_models.CompiledGraphicsTemplate) -> bytes:
     """generate an image based on the provided template specifications
