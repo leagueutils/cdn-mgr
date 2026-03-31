@@ -14,14 +14,14 @@ CREATE TABLE cdn.links (
 );
 
 CREATE TABLE gfx.templates(
-    template_id UUID REFERENCES cdn.media(media_id) ON DELETE CASCADE,
+    template_path VARCHAR(128) REFERENCES cdn.links(link) ON DELETE CASCADE,
     template_type VARCHAR(16),
     tournament_id INTEGER,
     UNIQUE(template_type, tournament_id)
 );
 
 CREATE TABLE gfx.template_components(
-    template_id UUID REFERENCES gfx.templates(template_id) ON DELETE CASCADE,
+    template_path VARCHAR(128) REFERENCES cdn.links(link) ON DELETE CASCADE,
     component_type VARCHAR(8),
     component_value JSONB
 );

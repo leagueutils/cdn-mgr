@@ -1,13 +1,15 @@
 import aiofiles
+import asyncpg
 from aiofiles import os
 
 import leagueutils.models.cdn as cdn_models
 import leagueutils.models.mesh as models
 from leagueutils.components.logging import get_logger
 from leagueutils.components.mesh import RMQMessageService
-from leagueutils.errors import DbNotFoundException, MediaNotFound
+from leagueutils.errors import CDNException, DbNotFoundException, MediaNotFound
 from leagueutils.models import routes
 from leagueutils.models.cdn import ImagePlaceholder, TextComponent
+from leagueutils.models.cdn import MediaClass as MediaClassModel
 from rust_image_gen import generate_image
 from triggers import CronTrigger
 
@@ -130,7 +132,10 @@ async def create_template(
     template.validate(background_image)
 
     template_id = await store_media(template, background_image, f'{tournament_id}-{template_type}.png')
-    await remove_template(template_type, tournament_id)
+    try:
+        await remove_template(template_type, tournament_id)
+    except MediaNotFound:
+        pass
     await db.execute('INSERT INTO gfx.templates VALUES ($1, $2, $3)', template_id, template_type, tournament_id)
 
     await store_components(template_id, placeholders)
@@ -215,6 +220,48 @@ async def fetch_template(
             components.append(TextComponent(**record['component_value']))
 
     return records[0]['template_id'], font_path, components  # noqa - the database records are VARCHARs
+
+
+@mesh.message_mapping(routes.CDN.COPY_TEMPLATE)
+async def copy_template(template_type: str, source_tournament_id: int, target_tournament_id: int):
+    """copy a template
+    :param template_type: the template type
+    :param source_tournament_id: the id of the tournament the template is from
+    :param target_tournament_id: the id of the tournament the template is for
+    :raises MediaNotFound: if the template is not defined for the source tournament
+    """
+
+    # copy font
+    try:
+        [font_path] = await db.execute('SELECT font_path FROM gfx.fonts WHERE tournament_id=$1', source_tournament_id)
+        new_font_path = str(target_tournament_id) + '-' + font_path.split('-', maxsplit=1)[1]
+        await add_symlink(MediaClassModel.font, font_path, new_font_path)
+    except DbNotFoundException:
+        pass  # no specialized font
+
+    # copy background image
+    template_name = f'{template_type}-{source_tournament_id}.png'
+    target_name = f'{template_type}-{target_tournament_id}.png'
+    await add_symlink(MediaClassModel.template, template_name, target_name)
+
+    # copy template &  placeholders
+    try:
+        Template.get_symlink_path(config.base_path, target_name)
+        await db.execute(
+            'INSERT INTO gfx.templates VALUES($1, $2, $3)',
+            Template.get_symlink_path(config.base_path, target_name),
+            str(MediaClassModel.template),
+            target_tournament_id,
+        )
+        await db.execute(
+            f"""INSERT INTO gfx.template_components SELECT {Template.get_symlink_path(config.base_path, target_name)}
+            AS template_link, component_type, component_value FROM gfx.template_components WHERE template_link=$1""",
+            Template.get_symlink_path(config.base_path, template_name),
+        )
+    except asyncpg.PostgresError as e:
+        raise CDNException() from e
+    except DbNotFoundException as e:
+        raise MediaNotFound('Missing or empty template') from e
 
 
 @mesh.message_mapping(routes.CDN.CREATE_GRAPHICS)

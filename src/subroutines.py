@@ -81,7 +81,9 @@ async def add_symlink(media_class: MediaClass, old_filename: str, new_filename):
     await db.execute('INSERT INTO cdn.links VALUES ($1, $2, $3)', media_id, new_symlink, media_class.ttl)
 
 
-async def store_components(template_id: str, components: [cdn_models.ImagePlaceholder | cdn_models.TextPlaceholder]):
+async def store_components(
+    template_id: str, components: list[cdn_models.ImagePlaceholder | cdn_models.TextPlaceholder]
+):
     """subroutine to store components for a template"""
 
     data = []
@@ -97,7 +99,7 @@ async def store_components(template_id: str, components: [cdn_models.ImagePlaceh
 
 
 def rust_component_converter(
-    components: list[cdn_models.BlankComponent, cdn_models.ImageComponent, cdn_models.TextComponent],
+    components: list[cdn_models.BlankComponent | cdn_models.ImageComponent | cdn_models.TextComponent],
 ) -> tuple[list[ImageComponent], list[TextComponent]]:
     """convert a list of models into Rust-compatible classes"""
 
